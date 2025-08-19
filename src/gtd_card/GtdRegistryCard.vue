@@ -3,40 +3,21 @@
     <h3 class="mod-card-title">Projects, Next Actions, Waiting For</h3>
     <div v-if="loading" class="mod-muted">Loading tasks...</div>
     <div v-else style="display: flex; gap: 1.5rem; width: 100%;">
-      <div class="mod-card-section" style="flex: 1 1 0; min-width: 200px; max-width: 320px; display: flex; flex-direction: column;">
-        <div style="display: flex; justify-content: space-between; align-items: center; font-weight: bold; margin-bottom: 0.5rem;">
-          <span>Projects</span>
-          <button class="mod-cta" @click="() => openModal('project')">+ New</button>
-        </div>
-        <div class="mod-scrollable" style="flex: 1 1 auto; overflow-y: auto; border-top: 1px solid var(--background-modifier-border); padding-top: 0.5rem; max-height: 350px;">
-          <div v-for="item in projects" :key="item.id" class="mod-clickable" style="padding: 0.5rem 0.25rem; border-bottom: 1px solid var(--background-modifier-border); cursor: pointer;" @click="() => openModal('project', item)">
-            {{ item.title }}
-          </div>
-        </div>
-      </div>
-      <div class="mod-card-section" style="flex: 1 1 0; min-width: 200px; max-width: 320px; display: flex; flex-direction: column;">
-        <div style="display: flex; justify-content: space-between; align-items: center; font-weight: bold; margin-bottom: 0.5rem;">
-          <span>Next Actions</span>
-          <button class="mod-cta" @click="() => openModal('action')">+ New</button>
-        </div>
-        <div class="mod-scrollable" style="flex: 1 1 auto; overflow-y: auto; border-top: 1px solid var(--background-modifier-border); padding-top: 0.5rem; max-height: 350px;">
-          <div v-for="item in actions" :key="item.id" class="mod-clickable" style="padding: 0.5rem 0.25rem; border-bottom: 1px solid var(--background-modifier-border); cursor: pointer;" @click="() => openModal('action', item)">
-            {{ item.title }}
-            <span v-if="item.waitingForWarning" class="gtd-warning" title="This task is #waiting-for but missing waitingOn field">&#9888;</span>
-          </div>
-        </div>
-      </div>
-      <div class="mod-card-section" style="flex: 1 1 0; min-width: 200px; max-width: 320px; display: flex; flex-direction: column;">
-        <div style="display: flex; justify-content: space-between; align-items: center; font-weight: bold; margin-bottom: 0.5rem;">
-          <span>Waiting For</span>
-          <button class="mod-cta" @click="() => openModal('waiting')">+ New</button>
-        </div>
-        <div class="mod-scrollable" style="flex: 1 1 auto; overflow-y: auto; border-top: 1px solid var(--background-modifier-border); padding-top: 0.5rem; max-height: 350px;">
-          <div v-for="item in waitingFor" :key="item.id" class="mod-clickable" style="padding: 0.5rem 0.25rem; border-bottom: 1px solid var(--background-modifier-border); cursor: pointer;" @click="() => openModal('waiting', item)">
-            {{ item.title }}
-          </div>
-        </div>
-      </div>
+      <ProjectsCard
+        :items="projects"
+        :onCreate="() => openModal('project')"
+        :onEdit="(item) => openModal('project', item)"
+      />
+      <NextActionsCard
+        :items="actions"
+        :onCreate="() => openModal('action')"
+        :onEdit="(item) => openModal('action', item)"
+      />
+      <WaitingForCard
+        :items="waitingFor"
+        :onCreate="() => openModal('waiting')"
+        :onEdit="(item) => openModal('waiting', item)"
+      />
     </div>
     <div v-if="modalOpen" class="modal-bg">
       <div class="modal mod-settings">
@@ -58,18 +39,34 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import ProjectsCard from './ProjectsCard.vue';
+import NextActionsCard from './NextActionsCard.vue';
+import WaitingForCard from './WaitingForCard.vue';
+
+interface TaskItem {
+  title: string;
+  tags: string[];
+  waitingOn: string;
+  sentAt: string;
+  isWaiting: boolean;
+  waitingForWarning: boolean;
+  raw: string;
+  id: string;
+  line: string;
+  file?: string;
+}
 
 const loading = ref(true);
-const projects = ref<any[]>([]);
-const actions = ref<any[]>([]);
-const waitingFor = ref<any[]>([]);
+const projects = ref<TaskItem[]>([]);
+const actions = ref<TaskItem[]>([]);
+const waitingFor = ref<TaskItem[]>([]);
 
 // Modal state
 const modalOpen = ref(false);
 const modalType = ref('');
 const modalTypeLabel = ref('');
 const modalEdit = ref(false);
-const modalItem = ref<any>(null);
+const modalItem = ref<TaskItem | null>(null);
 const modalTitle = ref('');
 const modalWaitingFor = ref(false);
 const modalWaitingOn = ref('');
@@ -92,9 +89,9 @@ function getNoticeApi() {
   return (window as any).app?.internalPlugins?.plugins?.getPlugin('core-notes')?.instance?.notice || ((msg: string) => alert(msg));
 }
 
-function parseTasksFromMarkdown(content: string) {
+function parseTasksFromMarkdown(content: string): TaskItem[] {
   const lines = content.split(/\r?\n/);
-  const tasks = [];
+  const tasks: TaskItem[] = [];
   for (const line of lines) {
     const match = line.match(/^\s*- \[.\] (.+)$/);
     if (match) {
@@ -152,13 +149,13 @@ async function loadTasksDistributedMode(folderPath: string) {
     const folder = vault.getAbstractFileByPath(folderPath);
     if (!folder || folder.children === undefined) throw new Error('Folder not found');
     const projectFiles = folder.children.filter((f: any) => f.extension === 'md');
-    const allProjects: any[] = [];
-    const allActions: any[] = [];
-    const allWaiting: any[] = [];
+    const allProjects: TaskItem[] = [];
+    const allActions: TaskItem[] = [];
+    const allWaiting: TaskItem[] = [];
     for (const file of projectFiles) {
       const content = await vault.adapter.read(file.path).catch(() => '');
       const tasks = parseTasksFromMarkdown(content);
-      allProjects.push({ title: file.basename, id: file.path });
+      allProjects.push({ title: file.basename, id: file.path, tags: [], waitingOn: '', sentAt: '', isWaiting: false, waitingForWarning: false, raw: '', line: '', file: file.path });
       for (const task of tasks) {
         if (task.isWaiting) {
           allWaiting.push({ ...task, file: file.path });
@@ -186,7 +183,7 @@ async function reloadTasks() {
   loading.value = false;
 }
 
-function openModal(type: string, item: any = null) {
+function openModal(type: string, item: TaskItem | null = null) {
   modalOpen.value = true;
   modalType.value = type;
   modalTypeLabel.value =
@@ -231,7 +228,7 @@ async function saveModal() {
       });
       if (modalEdit.value && modalItem.value) {
         // Edit: replace the line
-        const idx = lines.findIndex(l => l === modalItem.value.line);
+        const idx = lines.findIndex(l => l === modalItem.value!.line);
         if (idx !== -1) lines[idx] = newLine;
       } else {
         // Create: add new line
@@ -261,7 +258,7 @@ async function saveModal() {
           sentAt: modalSentAt.value,
         });
         if (modalEdit.value && modalItem.value) {
-          const idx = lines.findIndex(l => l === modalItem.value.line);
+          const idx = lines.findIndex(l => l === modalItem.value!.line);
           if (idx !== -1) lines[idx] = newLine;
         } else {
           lines.push(newLine);
