@@ -1,18 +1,18 @@
 
-.gtd-warning[data-v-0cfa5b2f] {
+.gtd-warning[data-v-8dbb7839] {
   color: var(--color-orange);
   margin-left: 0.5em;
   font-size: 1.2em;
   vertical-align: middle;
 }
 
-.gtd-warning[data-v-60fe9010] {
+.gtd-warning[data-v-3298a169] {
   color: var(--color-orange);
   margin-left: 0.5em;
   font-size: 1.2em;
   vertical-align: middle;
 }
-.modal-bg[data-v-60fe9010] {
+.modal-bg[data-v-3298a169] {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0,0,0,0.2);
@@ -21,7 +21,7 @@
   justify-content: center;
   z-index: 1000;
 }
-.modal-button-container[data-v-60fe9010] {
+.modal-button-container[data-v-3298a169] {
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
