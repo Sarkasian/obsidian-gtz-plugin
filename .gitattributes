@@ -1,0 +1,15 @@
+# Set default behavior to automatically normalize line endings
+* text=auto
+
+# Force CSS files to use LF
+*.css text eol=lf
+
+# Force JS/TS/Vue files to use LF
+*.js text eol=lf
+*.ts text eol=lf
+*.vue text eol=lf
+
+# Force config files to use LF
+*.json text eol=lf
+*.eslintrc text eol=lf
+*.editorconfig text eol=lf

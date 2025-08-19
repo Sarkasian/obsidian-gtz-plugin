@@ -1,0 +1,11 @@
+{
+	"id": "gtd",
+	"name": "Getting Things Done",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Personal activity management system based on David Allen's 'Getting Things Done' system.",
+	"author": "Paul Nodwell",
+	"authorUrl": "https://obsidian.md",
+	"fundingUrl": "https://obsidian.md/pricing",
+	"isDesktopOnly": false
+}
