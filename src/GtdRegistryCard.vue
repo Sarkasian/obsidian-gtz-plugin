@@ -1,55 +1,55 @@
 <template>
-  <div class="gtd-homepage-card gtd-registry-card">
-    <h3>Projects, Next Actions, Waiting For</h3>
-    <div v-if="loading" class="gtd-registry-loading">Loading tasks...</div>
-    <div v-else class="gtd-registry-lists">
-      <div class="gtd-registry-list">
-        <div class="gtd-registry-list-header">
+  <div class="gtd-registry-card mod-card">
+    <h3 class="mod-card-title">Projects, Next Actions, Waiting For</h3>
+    <div v-if="loading" class="mod-muted">Loading tasks...</div>
+    <div v-else style="display: flex; gap: 1.5rem; width: 100%;">
+      <div class="mod-card-section" style="flex: 1 1 0; min-width: 200px; max-width: 320px; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-weight: bold; margin-bottom: 0.5rem;">
           <span>Projects</span>
-          <button @click="() => openModal('project')">+ New</button>
+          <button class="mod-cta" @click="() => openModal('project')">+ New</button>
         </div>
-        <div class="gtd-registry-list-content">
-          <div v-for="item in projects" :key="item.id" class="gtd-registry-list-item" @click="() => openModal('project', item)">
+        <div class="mod-scrollable" style="flex: 1 1 auto; overflow-y: auto; border-top: 1px solid var(--background-modifier-border); padding-top: 0.5rem; max-height: 350px;">
+          <div v-for="item in projects" :key="item.id" class="mod-clickable" style="padding: 0.5rem 0.25rem; border-bottom: 1px solid var(--background-modifier-border); cursor: pointer;" @click="() => openModal('project', item)">
             {{ item.title }}
           </div>
         </div>
       </div>
-      <div class="gtd-registry-list">
-        <div class="gtd-registry-list-header">
+      <div class="mod-card-section" style="flex: 1 1 0; min-width: 200px; max-width: 320px; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-weight: bold; margin-bottom: 0.5rem;">
           <span>Next Actions</span>
-          <button @click="() => openModal('action')">+ New</button>
+          <button class="mod-cta" @click="() => openModal('action')">+ New</button>
         </div>
-        <div class="gtd-registry-list-content">
-          <div v-for="item in actions" :key="item.id" class="gtd-registry-list-item" @click="() => openModal('action', item)">
+        <div class="mod-scrollable" style="flex: 1 1 auto; overflow-y: auto; border-top: 1px solid var(--background-modifier-border); padding-top: 0.5rem; max-height: 350px;">
+          <div v-for="item in actions" :key="item.id" class="mod-clickable" style="padding: 0.5rem 0.25rem; border-bottom: 1px solid var(--background-modifier-border); cursor: pointer;" @click="() => openModal('action', item)">
             {{ item.title }}
             <span v-if="item.waitingForWarning" class="gtd-warning" title="This task is #waiting-for but missing waitingOn field">&#9888;</span>
           </div>
         </div>
       </div>
-      <div class="gtd-registry-list">
-        <div class="gtd-registry-list-header">
+      <div class="mod-card-section" style="flex: 1 1 0; min-width: 200px; max-width: 320px; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-weight: bold; margin-bottom: 0.5rem;">
           <span>Waiting For</span>
-          <button @click="() => openModal('waiting')">+ New</button>
+          <button class="mod-cta" @click="() => openModal('waiting')">+ New</button>
         </div>
-        <div class="gtd-registry-list-content">
-          <div v-for="item in waitingFor" :key="item.id" class="gtd-registry-list-item" @click="() => openModal('waiting', item)">
+        <div class="mod-scrollable" style="flex: 1 1 auto; overflow-y: auto; border-top: 1px solid var(--background-modifier-border); padding-top: 0.5rem; max-height: 350px;">
+          <div v-for="item in waitingFor" :key="item.id" class="mod-clickable" style="padding: 0.5rem 0.25rem; border-bottom: 1px solid var(--background-modifier-border); cursor: pointer;" @click="() => openModal('waiting', item)">
             {{ item.title }}
           </div>
         </div>
       </div>
     </div>
-    <div v-if="modalOpen" class="gtd-modal-overlay">
-      <div class="gtd-modal">
+    <div v-if="modalOpen" class="modal-bg">
+      <div class="modal mod-settings">
         <h4>{{ modalEdit ? 'Edit' : 'Create' }} {{ modalTypeLabel }}</h4>
-        <input v-model="modalTitle" placeholder="Title" />
+        <input v-model="modalTitle" class="input" placeholder="Title" />
         <div v-if="modalType === 'action' || modalType === 'waiting'">
           <label><input type="checkbox" v-model="modalWaitingFor" /> #waiting-for</label>
-          <input v-if="modalWaitingFor" v-model="modalWaitingOn" placeholder="waitingOn (name)" />
-          <input v-if="modalWaitingFor" v-model="modalSentAt" placeholder="sentAt (timestamp)" />
+          <input v-if="modalWaitingFor" v-model="modalWaitingOn" class="input" placeholder="waitingOn (name)" />
+          <input v-if="modalWaitingFor" v-model="modalSentAt" class="input" placeholder="sentAt (timestamp)" />
         </div>
-        <div class="gtd-modal-actions">
-          <button @click="saveModal">Save</button>
-          <button @click="closeModal">Cancel</button>
+        <div class="modal-button-container">
+          <button class="mod-cta" @click="saveModal">Save</button>
+          <button class="mod-warning" @click="closeModal">Cancel</button>
         </div>
       </div>
     </div>
@@ -281,68 +281,13 @@ onMounted(reloadTasks);
 </script>
 
 <style scoped>
-.gtd-registry-card {
-  background: var(--background-secondary-alt);
-  border-radius: 0.75rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-  padding: 1.25rem 1.5rem;
-  min-width: 700px;
-  max-width: 1000px;
-  flex: 2 1 700px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-.gtd-registry-lists {
-  display: flex;
-  gap: 1.5rem;
-  width: 100%;
-}
-.gtd-registry-list {
-  flex: 1 1 0;
-  display: flex;
-  flex-direction: column;
-  background: var(--background-primary);
-  border-radius: 0.5rem;
-  padding: 0.5rem;
-  min-width: 200px;
-  max-width: 320px;
-  height: 400px;
-}
-.gtd-registry-list-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-}
-.gtd-registry-list-content {
-  flex: 1 1 auto;
-  overflow-y: auto;
-  border-top: 1px solid var(--background-modifier-border);
-  padding-top: 0.5rem;
-}
-.gtd-registry-list-item {
-  padding: 0.5rem 0.25rem;
-  cursor: pointer;
-  border-bottom: 1px solid var(--background-modifier-border);
-}
-.gtd-registry-list-item:last-child {
-  border-bottom: none;
-}
-.gtd-registry-loading {
-  width: 100%;
-  text-align: center;
-  padding: 2rem 0;
-  color: var(--text-muted);
-}
 .gtd-warning {
-  color: orange;
+  color: var(--color-orange);
   margin-left: 0.5em;
   font-size: 1.2em;
   vertical-align: middle;
 }
-.gtd-modal-overlay {
+.modal-bg {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0,0,0,0.2);
@@ -351,17 +296,7 @@ onMounted(reloadTasks);
   justify-content: center;
   z-index: 1000;
 }
-.gtd-modal {
-  background: var(--background-primary);
-  border-radius: 0.5rem;
-  padding: 2rem;
-  min-width: 320px;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.15);
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-.gtd-modal-actions {
+.modal-button-container {
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
