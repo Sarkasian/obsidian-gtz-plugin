@@ -1,6 +1,5 @@
 <template>
   <div class="gtd-registry-card mod-card">
-    <h3 class="mod-card-title">Projects, Next Actions, Waiting For</h3>
     <div v-if="loading" class="mod-muted">Loading tasks...</div>
     <div v-else style="display: flex; gap: 1.5rem; width: 100%;">
       <ProjectsCard
