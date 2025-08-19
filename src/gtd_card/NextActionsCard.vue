@@ -1,16 +1,9 @@
 <template>
-  <BaseCard
-    title="Next Actions"
-    :items="items"
-    :onCreate="onCreate"
-    :onEdit="onEdit"
-  >
-    <template #item="{ item }">
-      <BaseItem>
-        {{ item.title }}
-        <span v-if="item.waitingForWarning" class="gtd-warning" title="This task is #waiting-for but missing waitingOn field">&#9888;</span>
-      </BaseItem>
-    </template>
+  <BaseCard title="Next Actions" :onCreate="onCreate">
+    <BaseItem v-for="item in items" :key="item.id" :onClick="() => onEdit(item)">
+      {{ item.title }}
+      <span v-if="item.waitingForWarning" class="gtd-warning" title="This task is #waiting-for but missing waitingOn field">&#9888;</span>
+    </BaseItem>
   </BaseCard>
 </template>
 

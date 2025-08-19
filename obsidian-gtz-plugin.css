@@ -1,18 +1,5 @@
 
-.base-item-card[data-v-72698a67] {
-  background: var(--background-primary);
-  border: 1.5px solid var(--background-modifier-border);
-  border-radius: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  margin-bottom: 0.5rem;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-  transition: box-shadow 0.15s;
-}
-.base-item-card[data-v-72698a67]:hover {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-}
-
-.gtd-warning[data-v-3bf150a4] {
+.gtd-warning[data-v-7375cefe] {
   color: var(--color-orange);
   margin-left: 0.5em;
   font-size: 1.2em;

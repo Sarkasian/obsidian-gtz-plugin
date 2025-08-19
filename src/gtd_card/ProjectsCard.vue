@@ -1,15 +1,8 @@
 <template>
-  <BaseCard
-    title="Projects"
-    :items="items"
-    :onCreate="onCreate"
-    :onEdit="onEdit"
-  >
-    <template #item="{ item }">
-      <BaseItem>
-        {{ item.title }}
-      </BaseItem>
-    </template>
+  <BaseCard title="Projects" :onCreate="onCreate">
+    <BaseItem v-for="item in items" :key="item.id" :onClick="() => onEdit(item)">
+      {{ item.title }}
+    </BaseItem>
   </BaseCard>
 </template>
 
