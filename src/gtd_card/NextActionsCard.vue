@@ -6,14 +6,17 @@
     :onEdit="onEdit"
   >
     <template #item="{ item }">
-      {{ item.title }}
-      <span v-if="item.waitingForWarning" class="gtd-warning" title="This task is #waiting-for but missing waitingOn field">&#9888;</span>
+      <BaseItem>
+        {{ item.title }}
+        <span v-if="item.waitingForWarning" class="gtd-warning" title="This task is #waiting-for but missing waitingOn field">&#9888;</span>
+      </BaseItem>
     </template>
   </BaseCard>
 </template>
 
 <script setup lang="ts">
 import BaseCard from './BaseCard.vue';
+import BaseItem from './BaseItem.vue';
 defineProps<{ items: any[], onCreate: () => void, onEdit: (item: any) => void }>();
 </script>
 

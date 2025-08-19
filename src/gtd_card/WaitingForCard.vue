@@ -6,12 +6,15 @@
     :onEdit="onEdit"
   >
     <template #item="{ item }">
-      {{ item.title }}
+      <BaseItem>
+        {{ item.title }}
+      </BaseItem>
     </template>
   </BaseCard>
 </template>
 
 <script setup lang="ts">
 import BaseCard from './BaseCard.vue';
+import BaseItem from './BaseItem.vue';
 defineProps<{ items: any[], onCreate: () => void, onEdit: (item: any) => void }>();
 </script>
