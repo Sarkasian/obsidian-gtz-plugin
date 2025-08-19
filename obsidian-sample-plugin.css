@@ -37,11 +37,97 @@
   font-weight: 600;
 }
 
-#app[data-v-e8249098] {
+.gtd-registry-card[data-v-6cebe5c6] {
+  background: var(--background-secondary-alt);
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  padding: 1.25rem 1.5rem;
+  min-width: 700px;
+  max-width: 1000px;
+  flex: 2 1 700px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.gtd-registry-lists[data-v-6cebe5c6] {
+  display: flex;
+  gap: 1.5rem;
+  width: 100%;
+}
+.gtd-registry-list[data-v-6cebe5c6] {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--background-primary);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  min-width: 200px;
+  max-width: 320px;
+  height: 400px;
+}
+.gtd-registry-list-header[data-v-6cebe5c6] {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+.gtd-registry-list-content[data-v-6cebe5c6] {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  border-top: 1px solid var(--background-modifier-border);
+  padding-top: 0.5rem;
+}
+.gtd-registry-list-item[data-v-6cebe5c6] {
+  padding: 0.5rem 0.25rem;
+  cursor: pointer;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.gtd-registry-list-item[data-v-6cebe5c6]:last-child {
+  border-bottom: none;
+}
+.gtd-registry-loading[data-v-6cebe5c6] {
+  width: 100%;
+  text-align: center;
+  padding: 2rem 0;
+  color: var(--text-muted);
+}
+.gtd-warning[data-v-6cebe5c6] {
+  color: orange;
+  margin-left: 0.5em;
+  font-size: 1.2em;
+  vertical-align: middle;
+}
+.gtd-modal-overlay[data-v-6cebe5c6] {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.gtd-modal[data-v-6cebe5c6] {
+  background: var(--background-primary);
+  border-radius: 0.5rem;
+  padding: 2rem;
+  min-width: 320px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.gtd-modal-actions[data-v-6cebe5c6] {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+#app[data-v-7be6d701] {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   padding: 2rem;
 }
-.cards[data-v-e8249098] {
+.cards[data-v-7be6d701] {
   display: flex;
   gap: 2rem;
   margin-top: 2rem;

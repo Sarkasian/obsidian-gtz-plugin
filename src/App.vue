@@ -4,6 +4,7 @@
     <div class="cards">
       <InboxCountCard />
       <RandomZettelCard />
+      <GtdRegistryCard />
     </div>
   </div>
 </template>
@@ -11,6 +12,7 @@
 <script setup lang="ts">
 import InboxCountCard from './InboxCountCard.vue';
 import RandomZettelCard from './RandomZettelCard.vue';
+import GtdRegistryCard from './GtdRegistryCard.vue';
 </script>
 
 <style scoped>
