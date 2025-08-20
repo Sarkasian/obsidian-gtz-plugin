@@ -1,6 +1,6 @@
 <template>
   <div class="mod-card">
-    <h3 class="mod-card-title">Random Zettel</h3>
+    <h3>Random Zettel</h3>
     <div>Random Zettel: Demo Note</div>
   </div>
 </template>

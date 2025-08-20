@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <h1 class="mod-card-title">Obsidian Sample Plugin Homepage</h1>
+    <h1>Obsidian Sample Plugin Homepage</h1>
     <div class="cards" style="display: flex; flex-direction: column; gap: 2rem; margin-top: 2rem;">
       <GtdRegistryCard />
       <RandomZettelCard />

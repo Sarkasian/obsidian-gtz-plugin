@@ -1,7 +1,7 @@
 <template>
-  <div class="mod-card base-card">
+  <div class="mod-card">
     <div class="mod-card-section">
-      <div class="base-card-header">
+      <div style="display: flex; justify-content: space-between; align-items: center; font-weight: bold; margin-bottom: 0.5rem;">
         <span>{{ title }}</span>
         <button class="mod-cta" @click="onCreate">+ New</button>
       </div>

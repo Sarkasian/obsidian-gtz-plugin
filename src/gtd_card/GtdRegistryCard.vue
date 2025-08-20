@@ -1,5 +1,5 @@
 <template>
-  <div class="gtd-registry-card mod-card">
+  <div class="mod-card">
     <div v-if="loading" class="mod-muted">Loading tasks...</div>
     <div v-else style="display: flex; gap: 1.5rem; width: 100%;">
       <ProjectsCard
@@ -18,7 +18,7 @@
         :onEdit="(item) => openModal('waiting', item)"
       />
     </div>
-    <div v-if="modalOpen" class="modal-bg">
+    <div v-if="modalOpen">
       <div class="modal mod-settings">
         <h4>{{ modalEdit ? 'Edit' : 'Create' }} {{ modalTypeLabel }}</h4>
         <input v-model="modalTitle" class="input" placeholder="Title" />
@@ -27,7 +27,7 @@
           <input v-if="modalWaitingFor" v-model="modalWaitingOn" class="input" placeholder="waitingOn (name)" />
           <input v-if="modalWaitingFor" v-model="modalSentAt" class="input" placeholder="sentAt (timestamp)" />
         </div>
-        <div class="modal-button-container">
+        <div>
           <button class="mod-cta" @click="saveModal">Save</button>
           <button class="mod-warning" @click="closeModal">Cancel</button>
         </div>
@@ -275,26 +275,3 @@ async function saveModal() {
 
 onMounted(reloadTasks);
 </script>
-
-<style scoped>
-.gtd-warning {
-  color: var(--color-orange);
-  margin-left: 0.5em;
-  font-size: 1.2em;
-  vertical-align: middle;
-}
-.modal-bg {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-.modal-button-container {
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-}
-</style>
