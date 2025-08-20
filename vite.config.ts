@@ -28,7 +28,7 @@ export default defineConfig({
         '@lezer/lr'
       ],
       output: {
-        exports: 'auto',
+        exports: 'named',
       },
     },
     outDir: '.',
