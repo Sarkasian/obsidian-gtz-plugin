@@ -206,13 +206,23 @@ async function checkForExternalChanges() {
       if (projectsContent !== currentProjectsContent || 
           actionsContent !== currentActionsContent || 
           waitingContent !== currentWaitingContent) {
-        // External changes detected, reload tasks
-        await reloadTasks();
+        // External changes detected, reload tasks silently (no loading state)
+        await reloadTasksSilently();
         getNoticeApi()('External changes detected and synced!');
       }
     } catch (e) {
       // Ignore errors during external change detection
     }
+  }
+}
+
+// Silent reload without showing loading state
+async function reloadTasksSilently() {
+  const settings = getPluginSettings();
+  if (settings.registryType === 'List') {
+    await loadTasksListMode(settings.taskLocationList);
+  } else {
+    await loadTasksDistributedMode(settings.taskLocationDistributed);
   }
 }
 
@@ -444,12 +454,42 @@ async function handleEditWaiting(id: string, newTitle: string) {
 
 onMounted(() => {
   reloadTasks();
-  // Set up periodic external change detection
-  const intervalId = setInterval(checkForExternalChanges, 5000); // Check every 5 seconds
   
-  // Clean up interval on component unmount
+  // Only check for external changes when the user is active or when the component becomes visible
+  // This prevents unnecessary checks and visual flickering
+  let lastCheck = Date.now();
+  const minCheckInterval = 60000; // Minimum 1 minute between checks
+  
+  const checkIfNeeded = async () => {
+    const now = Date.now();
+    if (now - lastCheck > minCheckInterval) {
+      await checkForExternalChanges();
+      lastCheck = now;
+    }
+  };
+  
+  // Check when the component becomes visible (user switches back to the tab)
+  const handleVisibilityChange = () => {
+    if (!document.hidden) {
+      checkIfNeeded();
+    }
+  };
+  
+  // Check when user becomes active (moves mouse, types, etc.)
+  const handleUserActivity = () => {
+    checkIfNeeded();
+  };
+  
+  // Set up event listeners
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  document.addEventListener('mousemove', handleUserActivity, { passive: true });
+  document.addEventListener('keydown', handleUserActivity, { passive: true });
+  
+  // Clean up event listeners on component unmount
   onUnmounted(() => {
-    clearInterval(intervalId);
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    document.removeEventListener('mousemove', handleUserActivity);
+    document.removeEventListener('keydown', handleUserActivity);
   });
 });
 </script>
