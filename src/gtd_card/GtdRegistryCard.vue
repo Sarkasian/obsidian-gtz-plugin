@@ -5,38 +5,23 @@
       <div style="flex: 1 1 0; min-width: 0;">
         <ProjectsCard
           :items="projects"
-          :onCreate="() => openModal('project')"
-          :onEdit="(item) => openModal('project', item)"
+          :onCreate="handleCreateProject"
+          :onEdit="handleEditProject"
         />
       </div>
       <div style="flex: 1 1 0; min-width: 0;">
         <NextActionsCard
           :items="actions"
-          :onCreate="() => openModal('action')"
-          :onEdit="(item) => openModal('action', item)"
+          :onCreate="handleCreateAction"
+          :onEdit="handleEditAction"
         />
       </div>
       <div style="flex: 1 1 0; min-width: 0;">
         <WaitingForCard
           :items="waitingFor"
-          :onCreate="() => openModal('waiting')"
-          :onEdit="(item) => openModal('waiting', item)"
+          :onCreate="handleCreateWaiting"
+          :onEdit="handleEditWaiting"
         />
-      </div>
-    </div>
-    <div v-if="modalOpen">
-      <div class="modal mod-settings">
-        <h4>{{ modalEdit ? 'Edit' : 'Create' }} {{ modalTypeLabel }}</h4>
-        <input v-model="modalTitle" class="input" placeholder="Title" />
-        <div v-if="modalType === 'action' || modalType === 'waiting'">
-          <label><input type="checkbox" v-model="modalWaitingFor" /> #waiting-for</label>
-          <input v-if="modalWaitingFor" v-model="modalWaitingOn" class="input" placeholder="waitingOn (name)" />
-          <input v-if="modalWaitingFor" v-model="modalSentAt" class="input" placeholder="sentAt (timestamp)" />
-        </div>
-        <div>
-          <button class="mod-cta" @click="saveModal">Save</button>
-          <button class="mod-warning" @click="closeModal">Cancel</button>
-        </div>
       </div>
     </div>
   </div>
@@ -65,17 +50,6 @@ const loading = ref(true);
 const projects = ref<TaskItem[]>([]);
 const actions = ref<TaskItem[]>([]);
 const waitingFor = ref<TaskItem[]>([]);
-
-// Modal state
-const modalOpen = ref(false);
-const modalType = ref('');
-const modalTypeLabel = ref('');
-const modalEdit = ref(false);
-const modalItem = ref<TaskItem | null>(null);
-const modalTitle = ref('');
-const modalWaitingFor = ref(false);
-const modalWaitingOn = ref('');
-const modalSentAt = ref('');
 
 function getPluginSettings() {
   return (window as any).gtdRegistrySettings || {
@@ -121,18 +95,19 @@ function parseTasksFromMarkdown(content: string): TaskItem[] {
   }
   return tasks;
 }
-function taskToMarkdown(task: any) {
+
+function taskToMarkdown(task: TaskItem): string {
   let line = `- [ ] ${task.title}`;
-  if (task.isWaiting || task.tags?.includes('waiting-for') || modalWaitingFor.value) line += ' #waiting-for';
-  if (task.waitingOn || modalWaitingOn.value) line += ` waitingOn::${task.waitingOn || modalWaitingOn.value}`;
-  if (task.sentAt || modalSentAt.value) line += ` sentAt::${task.sentAt || modalSentAt.value}`;
+  if (task.isWaiting || task.tags?.includes('waiting-for')) line += ' #waiting-for';
+  if (task.waitingOn) line += ` waitingOn::${task.waitingOn}`;
+  if (task.sentAt) line += ` sentAt::${task.sentAt}`;
   return line;
 }
 
 async function loadTasksListMode(folderPath: string) {
   const vault = getVault();
   const projectsFile = folderPath + '/Projects.md';
-  const actionsFile = folderPath + '/Actions.md';
+  const actionsFile = folderPath + '/Next Actions.md';
   const waitingFile = folderPath + '/Waiting For.md';
   try {
     const [projectsContent, actionsContent, waitingContent] = await Promise.all([
@@ -188,94 +163,186 @@ async function reloadTasks() {
   loading.value = false;
 }
 
-function openModal(type: string, item: TaskItem | null = null) {
-  modalOpen.value = true;
-  modalType.value = type;
-  modalTypeLabel.value =
-    type === 'project' ? 'Project' : type === 'action' ? 'Next Action' : 'Waiting For';
-  modalEdit.value = !!item;
-  modalItem.value = item;
-  modalTitle.value = item?.title || '';
-  modalWaitingFor.value = item?.isWaiting || false;
-  modalWaitingOn.value = item?.waitingOn || '';
-  modalSentAt.value = item?.sentAt || '';
-}
-function closeModal() {
-  modalOpen.value = false;
-  modalType.value = '';
-  modalEdit.value = false;
-  modalItem.value = null;
-  modalTitle.value = '';
-  modalWaitingFor.value = false;
-  modalWaitingOn.value = '';
-  modalSentAt.value = '';
-}
-
-async function saveModal() {
-  const settings = getPluginSettings();
-  const vault = getVault();
-  let filePath = '';
-  let newLine = '';
-  let fileContent = '';
-  let lines: string[] = [];
+// Project handlers
+async function handleCreateProject(item: TaskItem) {
   try {
+    const settings = getPluginSettings();
+    const vault = getVault();
     if (settings.registryType === 'List') {
-      if (modalType.value === 'project') filePath = settings.taskLocationList + '/Projects.md';
-      if (modalType.value === 'action') filePath = settings.taskLocationList + '/Actions.md';
-      if (modalType.value === 'waiting') filePath = settings.taskLocationList + '/Waiting For.md';
-      fileContent = await vault.adapter.read(filePath).catch(() => '');
-      lines = fileContent.split(/\r?\n/).filter(Boolean);
-      newLine = taskToMarkdown({
-        title: modalTitle.value,
-        isWaiting: modalWaitingFor.value,
-        waitingOn: modalWaitingOn.value,
-        sentAt: modalSentAt.value,
-      });
-      if (modalEdit.value && modalItem.value) {
-        // Edit: replace the line
-        const idx = lines.findIndex(l => l === modalItem.value!.line);
-        if (idx !== -1) lines[idx] = newLine;
-      } else {
-        // Create: add new line
-        lines.push(newLine);
-      }
+      const filePath = settings.taskLocationList + '/Projects.md';
+      const content = await vault.adapter.read(filePath).catch(() => '');
+      const lines = content.split(/\r?\n/).filter(Boolean);
+      const newLine = `- [ ] ${item.title}`;
+      lines.push(newLine);
       await vault.adapter.write(filePath, lines.join('\n'));
     } else {
-      // Distributed mode
-      if (modalType.value === 'project') {
-        // Create/edit a project file
-        filePath = settings.taskLocationDistributed + '/' + modalTitle.value + '.md';
-        if (!modalEdit.value) {
-          await vault.adapter.write(filePath, '');
-        } else if (modalItem.value && modalItem.value.id !== filePath) {
-          // Rename file if project name changed
-          await vault.adapter.rename(modalItem.value.id, filePath);
-        }
-      } else {
-        // Action or waiting: add/edit in the correct project file
-        filePath = modalItem.value?.file || settings.taskLocationDistributed + '/Misc.md';
-        fileContent = await vault.adapter.read(filePath).catch(() => '');
-        lines = fileContent.split(/\r?\n/).filter(Boolean);
-        newLine = taskToMarkdown({
-          title: modalTitle.value,
-          isWaiting: modalWaitingFor.value,
-          waitingOn: modalWaitingOn.value,
-          sentAt: modalSentAt.value,
-        });
-        if (modalEdit.value && modalItem.value) {
-          const idx = lines.findIndex(l => l === modalItem.value!.line);
-          if (idx !== -1) lines[idx] = newLine;
-        } else {
-          lines.push(newLine);
-        }
-        await vault.adapter.write(filePath, lines.join('\n'));
-      }
+      // Distributed mode - create new project file
+      const filePath = settings.taskLocationDistributed + '/' + item.title + '.md';
+      await vault.adapter.write(filePath, '');
     }
-    getNoticeApi()('Task saved!');
-    closeModal();
+    getNoticeApi()('Project created!');
     await reloadTasks();
   } catch (e) {
-    getNoticeApi()('Error saving task: ' + e.message);
+    getNoticeApi()('Error creating project: ' + e.message);
+  }
+}
+
+async function handleEditProject(id: string, newTitle: string) {
+  try {
+    const settings = getPluginSettings();
+    const vault = getVault();
+    if (settings.registryType === 'List') {
+      const filePath = settings.taskLocationList + '/Projects.md';
+      const content = await vault.adapter.read(filePath).catch(() => '');
+      const lines = content.split(/\r?\n/).filter(Boolean);
+      const project = projects.value.find(p => p.id === id);
+      if (project) {
+        const idx = lines.findIndex((l: string) => l === project.line);
+        if (idx !== -1) {
+          lines[idx] = `- [ ] ${newTitle}`;
+          await vault.adapter.write(filePath, lines.join('\n'));
+        }
+      }
+    } else {
+      // Distributed mode - rename project file
+      const project = projects.value.find(p => p.id === id);
+      if (project && project.file) {
+        const newPath = settings.taskLocationDistributed + '/' + newTitle + '.md';
+        await vault.adapter.rename(project.file, newPath);
+      }
+    }
+    getNoticeApi()('Project updated!');
+    await reloadTasks();
+  } catch (e) {
+    getNoticeApi()('Error updating project: ' + e.message);
+  }
+}
+
+// Action handlers
+async function handleCreateAction(item: TaskItem) {
+  try {
+    const settings = getPluginSettings();
+    const vault = getVault();
+    if (settings.registryType === 'List') {
+      const filePath = settings.taskLocationList + '/Next Actions.md';
+      const content = await vault.adapter.read(filePath).catch(() => '');
+      const lines = content.split(/\r?\n/).filter(Boolean);
+      const newLine = `- [ ] ${item.title}`;
+      lines.push(newLine);
+      await vault.adapter.write(filePath, lines.join('\n'));
+    } else {
+      // Distributed mode - add to Misc.md or first project
+      const filePath = settings.taskLocationDistributed + '/Misc.md';
+      const content = await vault.adapter.read(filePath).catch(() => '');
+      const lines = content.split(/\r?\n/).filter(Boolean);
+      const newLine = `- [ ] ${item.title}`;
+      lines.push(newLine);
+      await vault.adapter.write(filePath, lines.join('\n'));
+    }
+    getNoticeApi()('Action created!');
+    await reloadTasks();
+  } catch (e) {
+    getNoticeApi()('Error creating action: ' + e.message);
+  }
+}
+
+async function handleEditAction(id: string, newTitle: string) {
+  try {
+    const settings = getPluginSettings();
+    const vault = getVault();
+        if (settings.registryType === 'List') {
+      const filePath = settings.taskLocationList + '/Next Actions.md';
+      const content = await vault.adapter.read(filePath).catch(() => '');
+      const lines = content.split(/\r?\n/).filter(Boolean);
+      const action = actions.value.find(a => a.id === id);
+      if (action) {
+        const idx = lines.findIndex((l: string) => l === action.line);
+        if (idx !== -1) {
+          lines[idx] = `- [ ] ${newTitle}`;
+          await vault.adapter.write(filePath, lines.join('\n'));
+        }
+      }
+    } else {
+      // Distributed mode - find and update in project file
+              const action = actions.value.find(a => a.id === id);
+        if (action && action.file) {
+          const content = await vault.adapter.read(action.file).catch(() => '');
+          const lines = content.split(/\r?\n/).filter(Boolean);
+          const idx = lines.findIndex((l: string) => l === action.line);
+          if (idx !== -1) {
+            lines[idx] = `- [ ] ${newTitle}`;
+            await vault.adapter.write(action.file, lines.join('\n'));
+          }
+        }
+    }
+    getNoticeApi()('Action updated!');
+    await reloadTasks();
+  } catch (e) {
+    getNoticeApi()('Error updating action: ' + e.message);
+  }
+}
+
+// Waiting For handlers
+async function handleCreateWaiting(item: TaskItem) {
+  try {
+    const settings = getPluginSettings();
+    const vault = getVault();
+    if (settings.registryType === 'List') {
+      const filePath = settings.taskLocationList + '/Waiting For.md';
+      const content = await vault.adapter.read(filePath).catch(() => '');
+      const lines = content.split(/\r?\n/).filter(Boolean);
+      const newLine = `- [ ] ${item.title} #waiting-for`;
+      lines.push(newLine);
+      await vault.adapter.write(filePath, lines.join('\n'));
+    } else {
+      // Distributed mode - add to Misc.md
+      const filePath = settings.taskLocationDistributed + '/Misc.md';
+      const content = await vault.adapter.read(filePath).catch(() => '');
+      const lines = content.split(/\r?\n/).filter(Boolean);
+      const newLine = `- [ ] ${item.title} #waiting-for`;
+      lines.push(newLine);
+      await vault.adapter.write(filePath, lines.join('\n'));
+    }
+    getNoticeApi()('Waiting For item created!');
+    await reloadTasks();
+  } catch (e) {
+    getNoticeApi()('Error creating waiting for item: ' + e.message);
+  }
+}
+
+async function handleEditWaiting(id: string, newTitle: string) {
+  try {
+    const settings = getPluginSettings();
+    const vault = getVault();
+    if (settings.registryType === 'List') {
+      const filePath = settings.taskLocationList + '/Waiting For.md';
+      const content = await vault.adapter.read(filePath).catch(() => '');
+      const lines = content.split(/\r?\n/).filter(Boolean);
+      const waiting = waitingFor.value.find(w => w.id === id);
+      if (waiting) {
+        const idx = lines.findIndex((l: string) => l === waiting.line);
+        if (idx !== -1) {
+          lines[idx] = `- [ ] ${newTitle} #waiting-for`;
+          await vault.adapter.write(filePath, lines.join('\n'));
+        }
+      }
+    } else {
+      // Distributed mode - find and update in project file
+              const waiting = waitingFor.value.find(w => w.id === id);
+        if (waiting && waiting.file) {
+          const content = await vault.adapter.read(waiting.file).catch(() => '');
+          const lines = content.split(/\r?\n/).filter(Boolean);
+          const idx = lines.findIndex((l: string) => l === waiting.line);
+          if (idx !== -1) {
+            lines[idx] = `- [ ] ${newTitle} #waiting-for`;
+            await vault.adapter.write(waiting.file, lines.join('\n'));
+          }
+        }
+    }
+    getNoticeApi()('Waiting For item updated!');
+    await reloadTasks();
+  } catch (e) {
+    getNoticeApi()('Error updating waiting for item: ' + e.message);
   }
 }
 
@@ -283,10 +350,4 @@ onMounted(reloadTasks);
 </script>
 
 <style scoped>
-.gtd-warning {
-  color: var(--color-orange);
-  margin-left: 0.5em;
-  font-size: 1.2em;
-  vertical-align: middle;
-}
 </style>
