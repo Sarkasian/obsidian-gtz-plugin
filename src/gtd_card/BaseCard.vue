@@ -1,12 +1,12 @@
 <template>
   <div class="mod-card">
     <div class="mod-card-section">
-      <div style="display: flex; justify-content: space-between; align-items: center; font-weight: bold; margin-bottom: 0.5rem;">
-        <span>{{ title }}</span>
-        <button class="mod-cta" @click="onCreate">+ New</button>
-      </div>
-      <div class="mod-scrollable">
+      <h3 class="mod-card-title">{{ title }}</h3>
+      <div class="mod-scrollable" style="max-height: 350px;">
         <slot />
+      </div>
+      <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
+        <button class="mod-cta" @click="onCreate">+ New</button>
       </div>
     </div>
   </div>
