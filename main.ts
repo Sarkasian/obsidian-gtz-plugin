@@ -139,6 +139,7 @@ export default class MyPlugin extends Plugin {
     lastBackup: any = null;
     lastConversionType: string | null = null;
     lastConversionChanged: boolean = false;
+    fileWatchers: Set<string> = new Set();
 
     async onload() {
         this.registerView(
@@ -163,6 +164,9 @@ export default class MyPlugin extends Plugin {
         (window as any).gtdRegistryApp = this.app;
         (window as any).gtdRegistryVault = this.app.vault;
 
+        // Set up file change detection
+        this.setupFileWatching();
+
         // Watch for registry type changes
         const origSaveSettings = this.saveSettings.bind(this);
         this.saveSettings = async () => {
@@ -170,10 +174,71 @@ export default class MyPlugin extends Plugin {
             await origSaveSettings();
             if (this.settings.registryType !== prevType) {
                 await this.handleRegistryConversion(prevType, this.settings.registryType);
+                // Re-setup file watching after conversion
+                this.setupFileWatching();
             }
             (window as any).gtdRegistrySettings = this.settings;
         };
         (window as any).gtdRegistryUndoConversion = this.undoConversion.bind(this);
+    }
+
+    setupFileWatching() {
+        // Clear existing watchers
+        this.app.vault.off('modify', this.handleFileModify);
+        
+        // Set up new file watchers based on current settings
+        this.app.vault.on('modify', this.handleFileModify.bind(this));
+        
+        // Also watch for file creation and deletion
+        this.app.vault.on('create', this.handleFileCreate.bind(this));
+        this.app.vault.on('delete', this.handleFileDelete.bind(this));
+    }
+
+    handleFileModify(file: any) {
+        // Check if this is a file we care about
+        if (this.isRelevantFile(file.path)) {
+            // Notify Vue components about the file change
+            this.notifyFileChange('modify', file.path);
+        }
+    }
+
+    handleFileCreate(file: any) {
+        if (this.isRelevantFile(file.path)) {
+            this.notifyFileChange('create', file.path);
+        }
+    }
+
+    handleFileDelete(file: any) {
+        if (this.isRelevantFile(file.path)) {
+            this.notifyFileChange('delete', file.path);
+        }
+    }
+
+    isRelevantFile(filePath: string): boolean {
+        if (this.settings.registryType === 'List') {
+            const listFolder = this.settings.taskLocationList;
+            return filePath === `${listFolder}/Projects.md` ||
+                   filePath === `${listFolder}/Next Actions.md` ||
+                   filePath === `${listFolder}/Waiting For.md`;
+        } else {
+            const distFolder = this.settings.taskLocationDistributed;
+            return filePath.startsWith(distFolder + '/') && filePath.endsWith('.md');
+        }
+    }
+
+    notifyFileChange(type: string, filePath: string) {
+        // Create a custom event that Vue components can listen to
+        const event = new CustomEvent('gtd-file-change', {
+            detail: { type, filePath, timestamp: Date.now() }
+        });
+        document.dispatchEvent(event);
+    }
+
+    onunload() {
+        // Clean up file watchers
+        this.app.vault.off('modify', this.handleFileModify);
+        this.app.vault.off('create', this.handleFileCreate);
+        this.app.vault.off('delete', this.handleFileDelete);
     }
 
     async saveSettings() {

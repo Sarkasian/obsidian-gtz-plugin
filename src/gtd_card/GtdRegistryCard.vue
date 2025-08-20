@@ -46,6 +46,7 @@ interface TaskItem {
   file?: string;
   lineNumber: number; // Track exact line number in file
   originalContent: string; // Track original markdown content
+  filePath?: string; // Track the file path for the item
 }
 
 const loading = ref(true);
@@ -95,6 +96,7 @@ function parseTasksFromMarkdown(content: string): TaskItem[] {
         line,
         lineNumber: i + 1, // Track exact line number (1-indexed)
         originalContent: line, // Track original content
+        filePath: undefined, // No file path for initial parsing
       });
     }
   }
@@ -152,7 +154,8 @@ async function loadTasksDistributedMode(folderPath: string) {
         line: '', 
         file: file.path,
         lineNumber: 0,
-        originalContent: ''
+        originalContent: '',
+        filePath: file.path,
       });
       for (const task of tasks) {
         if (task.isWaiting) {
@@ -181,48 +184,58 @@ async function reloadTasks() {
   loading.value = false;
 }
 
-// Function to detect external changes and update UI
-async function checkForExternalChanges() {
-  const settings = getPluginSettings();
-  if (settings.registryType === 'List') {
-    // Check if any of the list files have been modified externally
-    const vault = getVault();
-    const projectsFile = settings.taskLocationList + '/Projects.md';
-    const actionsFile = settings.taskLocationList + '/Next Actions.md';
-    const waitingFile = settings.taskLocationList + '/Waiting For.md';
+// Reload a specific file and update the corresponding items
+async function reloadSpecificFile(filePath: string, currentItems: TaskItem[], itemType: string) {
+  const vault = getVault();
+  try {
+    const content = await vault.adapter.read(filePath).catch(() => '');
+    const newItems = parseTasksFromMarkdown(content);
     
-    try {
-      const [projectsContent, actionsContent, waitingContent] = await Promise.all([
-        vault.adapter.read(projectsFile).catch(() => ''),
-        vault.adapter.read(actionsFile).catch(() => ''),
-        vault.adapter.read(waitingFile).catch(() => ''),
-      ]);
-      
-      // Compare with current state to detect changes
-      const currentProjectsContent = projects.value.map(p => p.originalContent).join('\n');
-      const currentActionsContent = actions.value.map(a => a.originalContent).join('\n');
-      const currentWaitingContent = waitingFor.value.map(w => w.originalContent).join('\n');
-      
-      if (projectsContent !== currentProjectsContent || 
-          actionsContent !== currentActionsContent || 
-          waitingContent !== currentWaitingContent) {
-        // External changes detected, reload tasks silently (no loading state)
-        await reloadTasksSilently();
-        getNoticeApi()('External changes detected and synced!');
-      }
-    } catch (e) {
-      // Ignore errors during external change detection
-    }
+    // Clear existing items and replace with new ones
+    currentItems.length = 0;
+    currentItems.push(...newItems);
+    
+    // Update file paths for the new items
+    newItems.forEach(item => {
+      item.filePath = filePath;
+    });
+    
+  } catch (e) {
+    console.error(`Error reloading ${itemType} file:`, e);
   }
 }
 
-// Silent reload without showing loading state
-async function reloadTasksSilently() {
+// Handle file change events from the main plugin
+function handleFileChange(event: CustomEvent) {
+  const { type, filePath } = event.detail;
+  
+  // Determine which list this file belongs to
   const settings = getPluginSettings();
+  let targetList: any = null;
+  let itemType = '';
+  
   if (settings.registryType === 'List') {
-    await loadTasksListMode(settings.taskLocationList);
+    if (filePath.endsWith('/Projects.md')) {
+      targetList = projects.value;
+      itemType = 'project';
+    } else if (filePath.endsWith('/Next Actions.md')) {
+      targetList = actions.value;
+      itemType = 'action';
+    } else if (filePath.endsWith('/Waiting For.md')) {
+      targetList = waitingFor.value;
+      itemType = 'waiting';
+    }
   } else {
-    await loadTasksDistributedMode(settings.taskLocationDistributed);
+    // Distributed mode - need to determine which list based on content
+    // For now, reload all lists to be safe
+    reloadTasks();
+    return;
+  }
+  
+  if (targetList && itemType) {
+    // Reload the specific file that changed
+    reloadSpecificFile(filePath, targetList, itemType);
+    getNoticeApi()(`${itemType} file updated and synced!`);
   }
 }
 
@@ -455,41 +468,12 @@ async function handleEditWaiting(id: string, newTitle: string) {
 onMounted(() => {
   reloadTasks();
   
-  // Only check for external changes when the user is active or when the component becomes visible
-  // This prevents unnecessary checks and visual flickering
-  let lastCheck = Date.now();
-  const minCheckInterval = 60000; // Minimum 1 minute between checks
+  // Listen for file change events from the main plugin
+  document.addEventListener('gtd-file-change', handleFileChange as EventListener);
   
-  const checkIfNeeded = async () => {
-    const now = Date.now();
-    if (now - lastCheck > minCheckInterval) {
-      await checkForExternalChanges();
-      lastCheck = now;
-    }
-  };
-  
-  // Check when the component becomes visible (user switches back to the tab)
-  const handleVisibilityChange = () => {
-    if (!document.hidden) {
-      checkIfNeeded();
-    }
-  };
-  
-  // Check when user becomes active (moves mouse, types, etc.)
-  const handleUserActivity = () => {
-    checkIfNeeded();
-  };
-  
-  // Set up event listeners
-  document.addEventListener('visibilitychange', handleVisibilityChange);
-  document.addEventListener('mousemove', handleUserActivity, { passive: true });
-  document.addEventListener('keydown', handleUserActivity, { passive: true });
-  
-  // Clean up event listeners on component unmount
+  // Clean up event listener on component unmount
   onUnmounted(() => {
-    document.removeEventListener('visibilitychange', handleVisibilityChange);
-    document.removeEventListener('mousemove', handleUserActivity);
-    document.removeEventListener('keydown', handleUserActivity);
+    document.removeEventListener('gtd-file-change', handleFileChange as EventListener);
   });
 });
 </script>
