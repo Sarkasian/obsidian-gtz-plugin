@@ -8,6 +8,22 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     margin: 8px 0;
     overflow: hidden;
+    padding: 16px;
+}
+
+/* GTD Card Title */
+.gtd-card-title {
+    color: var(--text-normal);
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+/* GTD Card Content Area */
+.gtd-card-content {
+    padding: 8px 0;
 }
 
 /* GTD Card Items */
