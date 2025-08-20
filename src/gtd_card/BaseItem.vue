@@ -1,5 +1,5 @@
 <template>
-  <div class="mod-card-section mod-clickable" @click="onClick">
+  <div class="gtd-card-item" @click="onClick">
     <slot />
   </div>
 </template>

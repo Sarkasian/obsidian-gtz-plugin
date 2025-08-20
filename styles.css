@@ -1,0 +1,132 @@
+/* GTD Plugin Card Styles - Obsidian Native Design */
+
+/* Main GTD Card Container */
+.gtd-card {
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin: 8px 0;
+    overflow: hidden;
+}
+
+/* GTD Card Items */
+.gtd-card-item {
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    margin: 4px 0;
+    padding: 8px 12px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.gtd-card-item:hover {
+    background: var(--background-secondary-alt);
+    border-color: var(--interactive-accent);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Warning indicator for waiting-for tasks */
+.gtd-warning {
+    color: var(--text-warning);
+    margin-left: 8px;
+    font-weight: bold;
+}
+
+.gtd-warning:hover::after {
+    content: "Task has #waiting-for tag but no waitingOn field";
+    position: absolute;
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    padding: 8px;
+    margin-top: -30px;
+    margin-left: 20px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Modal styling to match Obsidian */
+.gtd-modal {
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.gtd-modal-header {
+    background: var(--background-secondary);
+    border-bottom: 1px solid var(--background-modifier-border);
+    padding: 16px 20px;
+    border-radius: 8px 8px 0 0;
+}
+
+.gtd-modal-body {
+    padding: 20px;
+}
+
+.gtd-modal-footer {
+    background: var(--background-secondary);
+    border-top: 1px solid var(--background-modifier-border);
+    padding: 16px 20px;
+    border-radius: 0 0 8px 8px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+/* Form inputs to match Obsidian */
+.gtd-input {
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    color: var(--text-normal);
+    padding: 8px 12px;
+    width: 100%;
+    margin: 4px 0;
+}
+
+.gtd-input:focus {
+    border-color: var(--interactive-accent);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(var(--interactive-accent-rgb), 0.2);
+}
+
+/* Buttons to match Obsidian */
+.gtd-btn {
+    background: var(--interactive-normal);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    color: var(--text-normal);
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.gtd-btn:hover {
+    background: var(--interactive-hover);
+}
+
+.gtd-btn-primary {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-color: var(--interactive-accent);
+}
+
+.gtd-btn-primary:hover {
+    background: var(--interactive-accent-hover);
+}
+
+.gtd-btn-danger {
+    background: var(--text-error);
+    color: var(--text-on-accent);
+    border-color: var(--text-error);
+}
+
+.gtd-btn-danger:hover {
+    background: var(--text-error-hover);
+}

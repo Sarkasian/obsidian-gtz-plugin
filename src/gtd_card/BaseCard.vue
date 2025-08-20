@@ -1,5 +1,5 @@
 <template>
-  <div class="mod-card">
+  <div class="gtd-card">
     <div class="mod-card-section">
       <h3 class="mod-card-title">{{ title }}</h3>
       <div class="mod-scrollable" style="max-height: 350px;">
