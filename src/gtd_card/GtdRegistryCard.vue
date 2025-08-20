@@ -1,22 +1,28 @@
 <template>
   <div class="mod-card">
     <div v-if="loading" class="mod-muted">Loading tasks...</div>
-    <div v-else style="display: flex; gap: 1.5rem; width: 100%;">
-      <ProjectsCard
-        :items="projects"
-        :onCreate="() => openModal('project')"
-        :onEdit="(item) => openModal('project', item)"
-      />
-      <NextActionsCard
-        :items="actions"
-        :onCreate="() => openModal('action')"
-        :onEdit="(item) => openModal('action', item)"
-      />
-      <WaitingForCard
-        :items="waitingFor"
-        :onCreate="() => openModal('waiting')"
-        :onEdit="(item) => openModal('waiting', item)"
-      />
+    <div style="display: flex; flex-direction: row; gap: 1.5rem; width: 100%;">
+      <div style="flex: 1 1 0; min-width: 0;">
+        <ProjectsCard
+          :items="projects"
+          :onCreate="() => openModal('project')"
+          :onEdit="(item) => openModal('project', item)"
+        />
+      </div>
+      <div style="flex: 1 1 0; min-width: 0;">
+        <NextActionsCard
+          :items="actions"
+          :onCreate="() => openModal('action')"
+          :onEdit="(item) => openModal('action', item)"
+        />
+      </div>
+      <div style="flex: 1 1 0; min-width: 0;">
+        <WaitingForCard
+          :items="waitingFor"
+          :onCreate="() => openModal('waiting')"
+          :onEdit="(item) => openModal('waiting', item)"
+        />
+      </div>
     </div>
     <div v-if="modalOpen">
       <div class="modal mod-settings">
@@ -275,3 +281,12 @@ async function saveModal() {
 
 onMounted(reloadTasks);
 </script>
+
+<style scoped>
+.gtd-warning {
+  color: var(--color-orange);
+  margin-left: 0.5em;
+  font-size: 1.2em;
+  vertical-align: middle;
+}
+</style>
